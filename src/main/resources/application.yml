@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: example-merchant
+server:
+  port: 8111
+
+
+merchant:
+  merchantNo: "xx" #请联系极易付提供
+  payKey: "xx" #请联系极易付提供
+  notifyUrl: "http://本机ip:8111/api/common/payment/notify" #商户接收回调通知地址
+uepay:
+  payment:
+    domain: https://fat.uepay.mo  #测试域名
+  oauth2:
+    url: https://gztest1.uepay.mo/api/oauth2/redirect #测试认证域名

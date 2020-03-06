@@ -1,0 +1,187 @@
+<!-- 調用 uepay wallet sdk 支付案例，環境：js，更多函數使用方法請參考 文档demo README.md 文獻說明。-->
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <title>UEPAY支付</title>
+    <style type="text/css">
+        .moneyWrap {
+            padding: 20px 0;
+            background-color: #fff;
+        }
+
+        .title {
+            height: 40px;
+            width: 100%;
+            font-weight: 600;
+            font-size: 14px;
+            letter-spacing: 1px;
+            margin: 12px auto 5px 15px;
+        }
+
+        .input {
+            padding-bottom: 10px;
+            height: 44px;
+            position: relative;
+            display: flex;
+            padding-left: 15px;
+            line-height: 44px;
+            background-color: #fff;
+            vertical-align: middle;
+            align-items: center;
+            border: none;
+            outline: none;
+            color: #000;
+            font-size: 17px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        input[type='number'] {
+            -moz-appearance: textfield;
+        }
+
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .btn {
+            background: rgba(0, 184, 184, 1);
+            border-radius: 12px;
+            height: 46px;
+            width: 100%;
+            font-size: 16px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 1);
+            border: none;
+        }
+
+        .btn:active {
+            background: rgba(0, 184, 184, 0.7);
+            border: none;
+        }
+
+        .btn:focus {
+            outline: none;
+        }
+    </style>
+</head>
+
+
+<body>
+    <div>
+        <form onsubmit="return false;">
+            <div class="moneyWrap">
+                <span class="title">充值金額(Payment amount)</span><br>
+                <input class="input" type="text" id="amt" name="amt" placeholder="$請輸入金額" autofocus="autofocus">
+            </div>
+            <br><br>
+            <button id="payment" class="btn" >立即支付</button>
+        </form>
+    </div>
+
+    <script type="text/javascript" src="/js/uepay_jssdk.js"></script> <!-- 引入uepay wallet sdk -->
+    <script type="text/javascript">
+        var uid = '[[${uid}]]';
+        alert("用户UID："+uid);
+        // 自定义一个ajax函数
+        function ajax(opt) {
+            opt = opt || {};
+            opt.method = opt.method.toUpperCase() || 'POST';
+            opt.url = opt.url || '';
+            opt.async = opt.async || true;
+            opt.data = opt.data || null;
+            opt.success = opt.success || function () { };
+            var xmlHttp = null;
+            if (XMLHttpRequest) {
+                xmlHttp = new XMLHttpRequest();
+            }
+            else {
+                xmlHttp = new ActiveXObject('Microsoft.XMLHTTP');
+            } var params = [];
+            for (var key in opt.data) {
+                params.push(key + '=' + opt.data[key]);
+            }
+            var postData = params.join('&');
+            if (opt.method.toUpperCase() === 'POST') {
+                xmlHttp.open(opt.method, opt.url, opt.async);
+                xmlHttp.setRequestHeader('Content-Type', 'application/json');
+                xmlHttp.send(JSON.stringify(opt.data));
+            }
+            else if (opt.method.toUpperCase() === 'GET') {
+                xmlHttp.open(opt.method, opt.url + '?' + postData, opt.async);
+                xmlHttp.send(null);
+            }
+            xmlHttp.onreadystatechange = function () {
+                if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+                    opt.success(JSON.parse(xmlHttp.responseText));//如果不是json数据可以去掉json转换
+                }
+            };
+        }
+
+        var but = document.getElementById('payment');
+        but.onclick = function (evt) {
+
+            const isUePay = window.UePayJsApi.isUePayApp();    // 判斷是否為uepay內核，true：表示是；false：表示否
+
+            if (isUePay) {
+                var tempOrderNo;
+                var paySdk = window.UePayJsApi.build(function (res) {      // 支付初始化
+                    // 支付成功回調函數
+                    var obj = JSON.parse(res);
+                    if (obj.ret_code === '00') {      // '00' 表示成功
+
+                        alert('成功');
+                        //查询订单并确认是否已经商户端业务订单是否支付成功
+                        ajax({
+                            method: 'POST',
+                            url: 'http://192.168.1.179:8111/api/order/query/'+tempOrderNo,
+                            success: function (data) {
+                                alert(JSON.stringify(data));
+                            }
+                        })
+                    }
+                    if (obj.ret_code === '01') {      // '01' 表示失敗
+                        alert('失败');
+                    }
+                    if (obj.ret_code === '02') {     // '02' 表示放棄支付
+                        alert('放弃支付');
+                    }
+                });
+                // 获取预支付参数
+                var amt = document.getElementById("amt").value;
+                var params = {
+                    "amt": amt,
+                    "body": "UePay錢包APP支付测试"
+                }
+                ajax({
+                    method: 'POST',
+                    url: 'http://192.168.1.179:8111/api/order/preorder',
+                    data: params,
+                    success: function (data) {
+//                        alert(JSON.stringify(data));
+                        tempOrderNo = data['orderNo'];
+//                        alert(tempOrderNo);
+                        var req = {
+                            appId: data['appId'],
+                            timeStamp: data['timeStamp'],
+                            nonceStr: data['nonceStr'],
+                            prepayid: data['prepayid'],
+                            signType: data['signType'],
+                            paySign: data['paySign']
+                        }
+                        paySdk.payment(req); // 支付
+                    }
+                })
+            } else {
+                alert("抱歉，请使用UePay打开");
+            }
+        }
+    </script>
+</body>
+
+</html>
