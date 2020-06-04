@@ -32,9 +32,8 @@
    
     项目启动后，替换本机IP ，把在访问地址转成二维码，使用UePay钱包APP扫一扫功能，完成支付体验。
 
-### 效果图
-![h5唤起支付](https://github.com/uepay/red-packet-qr-code-java-demo/blob/master/src/main/resources/static/1.jpg)
-![钱包支付界面](https://github.com/uepay/red-packet-qr-code-java-demo/blob/master/src/main/resources/static/2.jpg)
+### 接口文檔
+请参考[主扫聚合支付文档](https://docs.uepay.mo/archives/activescan)说明
 
 
 ### 
