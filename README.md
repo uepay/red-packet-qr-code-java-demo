@@ -36,6 +36,6 @@
 请参考[主扫聚合支付文档](https://docs.uepay.mo/archives/activescan)说明
 
 
-### 
+### 相關工具
 [在线二维码转换](https://cli.im)
 
